@@ -3,22 +3,17 @@
 Plugin Name: Menú Bares
 */
 
-// Shortcode principal
-add_shortcode('menu_bar', 'mostrar_menu_bar');
+add_shortcode('menu_bares', 'mostrar_menu_bar');
 
 function mostrar_menu_bar() {
     ob_start();
 
-    // Obtener el slug de la URL
     $slug = basename(parse_url($_SERVER["REQUEST_URI"], PHP_URL_PATH));
 
-   echo "<h1>Nuestro Menú</h1>";
+    echo "<h1 style='text-align: center;'>Nuestro Menú</h1>";
 
-
-    // Conexión a la base de datos de WordPress
     global $wpdb;
 
-    // Buscar el cliente por slug_publico
     $tabla_clientes = 'iunaorg_bares.aa_clientes_autorizados';
     $cliente = $wpdb->get_row(
         $wpdb->prepare(
@@ -32,10 +27,8 @@ function mostrar_menu_bar() {
         return ob_get_clean();
     }
 
-    // Usamos cliente_slug para buscar productos
     $cliente_slug = $cliente->cliente_slug;
 
-    // Obtener productos
     $tabla_productos = 'iunaorg_bares.aa_menu_productos';
     $productos = $wpdb->get_results(
         $wpdb->prepare(
@@ -49,22 +42,36 @@ function mostrar_menu_bar() {
         return ob_get_clean();
     }
 
-    // Agrupar productos por categoría
     $categorias = [];
+
     foreach ($productos as $producto) {
-        $categorias[$producto->categoria][] = $producto;
+        $categoria = $producto->categoria;
+        if (!isset($categorias[$categoria])) {
+            $categorias[$categoria] = [];
+        }
+        $categorias[$categoria][] = $producto;
     }
 
-    echo "<div class='menu-bar'>";
     foreach ($categorias as $categoria => $items) {
-        echo "<h3>$categoria</h3><ul>";
-        foreach ($items as $item) {
-            echo "<li><strong>{$item->nombre_producto}</strong>: {$item->descripcion} – <em>$" . number_format($item->precio, 2, ',', '.') . "</em></li>";
+        echo "<h2 style='margin-top: 30px;'>$categoria</h2>";
+        echo "<div style='display: flex; flex-wrap: wrap;'>";
+
+        foreach ($items as $index => $producto) {
+            $nombre = esc_html($producto->nombre_producto);
+            $descripcion = esc_html($producto->descripcion);
+            $precio = number_format($producto->precio, 2, ',', '.');
+            echo "
+                <div style='width: 50%; padding: 10px; box-sizing: border-box;'>
+                    <p>
+                        <strong>$nombre</strong>: $descripcion
+                        <em>– \$$precio</em>
+                    </p>
+                </div>
+            ";
         }
-        echo "</ul>";
+
+        echo "</div>";
     }
-    echo "</div>";
 
     return ob_get_clean();
 }
-?>
